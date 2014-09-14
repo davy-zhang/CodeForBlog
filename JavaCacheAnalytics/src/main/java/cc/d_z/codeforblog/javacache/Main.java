@@ -12,18 +12,18 @@ import java.util.concurrent.TimeUnit;
  *         <a href="http://d-z.cc">d-z.cc</a><br>
  */
 public class Main {
-	public static final int dataSize = 1024;
-	public static final int nThreads = 4;
-	public static final long times = 100000;
+	public static final int dataSize = 100;
+	public static final int nThreads = 8;
+	public static final long times = 1000000;
 	public static final String value = build(dataSize);
 
 	public static void main(String[] args) throws InterruptedException {
 
-//		analytics(new GuavaCache<Long, String>());
-//		analytics(new HashTableCache<Long, String>());
-//		analytics(new ConcurrentHashMapCache<Long, String>());
-//		analytics(new EhCacheMemory<Long, String>());
-		analytics(new EhCacheDisk<Long, String>());
+		analytics(new GuavaCache<Long, String>());
+		analytics(new HashTableCache<Long, String>());
+		analytics(new ConcurrentHashMapCache<Long, String>());
+		analytics(new EhCacheMemory<Long, String>());
+		// analytics(new EhCacheDisk<Long, String>());
 		// analytics(new JCSCache<Long, String>());
 	}
 
@@ -52,12 +52,15 @@ public class Main {
 
 	public static void analytics(String type, ICache<Long, String> cache, Runnable runnable) throws InterruptedException {
 		long start = System.nanoTime();
-		ExecutorService getService = Executors.newFixedThreadPool(nThreads);
-		getService.execute(runnable);
-		getService.shutdown();
-		getService.awaitTermination(1, TimeUnit.DAYS);
+		ExecutorService service = Executors.newFixedThreadPool(nThreads);
+		for (int i = 0; i < nThreads; i++) {
+			service.execute(runnable);
+		}
+		service.shutdown();
+		service.awaitTermination(1, TimeUnit.DAYS);
 		long end = System.nanoTime();
-		System.out.println(cache.getClass().getSimpleName() + "\t" + type + "\t" + dataSize + "\t" + nThreads + "\t" + times + "\t" + (end - start) + "\t");
+		if ("get".equals(type))
+			System.out.println(cache.getClass().getSimpleName() + "\t" + type + "\t" + dataSize + "\t" + nThreads + "\t" + times + "\t" + (end - start) + "\t");
 	}
 
 	private static String build(int size) {
